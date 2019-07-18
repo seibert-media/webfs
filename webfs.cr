@@ -11,8 +11,9 @@ server = HTTP::Server.new do |context|
     #
     # GET
     #
+    p context.request.path
     context.response.content_type = "text/html"
-    files = Dir["#{root}/*"].map{|file| File.basename file}
+    files = Dir["#{root}#{context.request.path}/*"].map{|file| File.basename file}
     context.response.print ECR.render("index.ecr")
     
   elsif method == "POST"
