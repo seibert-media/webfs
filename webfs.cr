@@ -2,15 +2,23 @@ require "http"
 require "http/server"
 require "ecr"
 
+i = ARGV.index("--root")
+root = i ? ARGV[i + 1] : "/"
+
 server = HTTP::Server.new do |context|
   method = context.request.method
   if method == "GET"
+    #
     # GET
+    #
     context.response.content_type = "text/html"
-    files = Dir["*"]
+    files = Dir["#{root}/*"].map{|file| File.basename file}
     context.response.print ECR.render("index.ecr")
+    
   elsif method == "POST"
+    #
     # PUST
+    #
     name = nil
     file = nil
     HTTP::FormData.parse(context.request) do |part|
@@ -29,6 +37,9 @@ server = HTTP::Server.new do |context|
     end
     context.response << file.path
   elsif method == "DELETE"
+    #
+    # DELETE
+    #
   end
 end
 
