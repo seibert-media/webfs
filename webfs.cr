@@ -1,12 +1,16 @@
 require "http"
 require "http/server"
+require "ecr"
+
+p Dir["*"]
 
 server = HTTP::Server.new do |context|
   method = context.request.method
   if method == "GET"
     # GET
     context.response.content_type = "text/plain"
-    context.response.print "Hello world!"
+    files = Dir["*"]
+    context.response.print ECR.render("index.ecr")
   elsif method == "POST"
     # PUST
     name = file = nil
