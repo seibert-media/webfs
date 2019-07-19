@@ -1,9 +1,10 @@
-puts "WebFS starting"
+puts "WebFS 1.0 starting"
 
 require "http"
 require "http/server"
 require "ecr"
 require "uri"
+require "file_utils"
 
 def log(entry : String)
   puts entry
@@ -51,6 +52,12 @@ notice = nil
 server = HTTP::Server.new do |context|
   context.response.content_type = "text/html"
   method = context.request.method
+  # get post params
+  if context.request.body
+    post_params = HTTP::Params.parse context.request.body.not_nil!.gets_to_end
+    p post_params
+    method = "DELETE" if post_params.fetch("_method", "") == "DELETE"
+  end
   request_path = URI.unescape(
     context.request.path.gsub(/\/$/, nil)
   )
@@ -81,7 +88,7 @@ server = HTTP::Server.new do |context|
       File.rename file.path, "#{target_path}"
     end
   end
-  if ["GET", "POST"].includes? method
+  if ["GET", "POST", "DELETE"].includes? method
     if File.directory? request_path_absolute
       # GET
       ## title
@@ -106,8 +113,15 @@ server = HTTP::Server.new do |context|
     end
   end
   if method == "DELETE"
+    delete_path = "#{root}#{post_params.not_nil!["path"]}"
     # DELETE
-    log "deleting '#{request_path_absolute}'"
+    if File.directory? delete_path
+      log "deleting recursively '#{delete_path}'"
+      #FileUtils.rm_rf request_path_absolute
+    else
+      log "deleting '#{delete_path}'"
+      #FileUtils.rm request_path_absolute
+    end
   end
   notice = nil # reset
 end

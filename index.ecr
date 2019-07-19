@@ -44,7 +44,12 @@
               <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
             </td>
             <td class=delete>
-              <a href="<%= "#{request_path}/#{File.basename entry}" %>">delete</a>
+              <form action="<%= "#{request_path}/" %>" method=post>
+                <input name=utf8 type=hidden value="&#x2713;" />
+                <input type=hidden name=_method value="DELETE" />
+                <input type=hidden name=path value="<%= "#{request_path}/#{File.basename entry}" %>" />
+                <input type=submit name=commit value=delete />
+              </form>
             </td>
           </tr>
         <% end %>
