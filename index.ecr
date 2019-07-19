@@ -23,13 +23,9 @@
       </thead>
       <tbody>
         <h1>
-          <%- context.request.path.split('/').each do |element| %>
-            <a href="<%= "#{context.request.path}#{element}" %>">
-              <%= File.basename element %>/
-            </a>
-          <% end %>
-        </h1>
-        <%- sorted_entries.each do |entry| %>
+          <% title_elements.each do |element| -%><a href="<%= "#{element}/".relative_to root %>"><%= File.basename "#{element}".relative_to root %>/</a><% end %>
+        </h1> 
+        <% sorted_entries.each do |entry| %>
           <tr>
             <td class=path>
               <a href="<%= "#{context.request.path}#{File.basename entry}" %>">
@@ -51,7 +47,6 @@
     </table>
     <form enctype=multipart/form-data action=/ accept-charset=UTF-8 method=post>
       <input name=utf8 type=hidden value="&#x2713;" />
-      <input type=hidden name=password value="<%= password %>" />
       <input type=hidden name=path value=/Users/mwiegand/Projekte/file-explorer/tmp />
       <input type=file name=file />
       <input type=submit name=commit value=upload data-disable-with=upload />

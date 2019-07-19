@@ -2,18 +2,14 @@ require "http"
 require "http/server"
 require "ecr"
 
-# arguments
-i = ARGV.index("--root")
-root = i ? ARGV[i + 1] : "/"
-i = ARGV.index("--password")
-password = i ? ARGV[i + 1] : nil
-
-struct Path
+# get relative path
+class String
   def relative_to(root : String)
     self.to_s[root.size..-1]
   end
 end
 
+# format int as si
 struct Int
   def to_si
     size = self
@@ -26,21 +22,26 @@ struct Int
   end
 end
 
+# arguments
+i = ARGV.index("--root")
+root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
+
 # loop
 server = HTTP::Server.new do |context|
   context.response.content_type = "text/html"
   method = context.request.method
-  if password && password != context.request.query_params.fetch("password", nil)
-    #
-    # PERMISSION ERROR
-    #
-    context.response.print "permission error"
-  elsif method == "GET"
+  if method == "GET"
     #
     # GET
     #
-    requested_path = "#{root}#{context.request.path}"
-    entries = Dir["#{requested_path}/*"].map{|entry| entry}
+    request_path = context.request.path.gsub(/\/$/, nil)
+    ## title
+    elements = request_path.split('/')
+    title_elements = elements.map_with_index do |element, i|
+      root + elements[0..i].join("/")
+    end
+    ## entries
+    entries = Dir["#{root}#{request_path}/*"].map{|entry| entry}
     dirs =  entries.select{|entry| File.directory? entry}.sort
     files = (entries - dirs).sort
     sorted_entries = dirs + files
