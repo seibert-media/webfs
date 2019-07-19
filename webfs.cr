@@ -89,14 +89,21 @@ server = HTTP::Server.new do |context|
     end
   end
   if method == "DELETE"
-    delete_path = "#{root}#{post_params.not_nil!["path"]}"
+    relative_delete_path = post_params.not_nil!["path"]
+    delete_path = "#{root}#{relative_delete_path}"
     # DELETE
-    if File.directory? delete_path
-      log "deleting recursively '#{delete_path}'"
-      #FileUtils.rm_rf delete_path
+    if post_params.not_nil!.fetch("confirm", nil) == "true"
+      if File.directory? delete_path
+        log "deleting recursively '#{relative_delete_path}'"
+        #FileUtils.rm_rf delete_path
+      else
+        log "deleting '#{relative_delete_path}'"
+        #FileUtils.rm delete_path
+      end
     else
-      log "deleting '#{delete_path}'"
-      #FileUtils.rm delete_path
+      log "confirm delete '#{relative_delete_path}'"
+      context.response.print ECR.render("confirm_delete.ecr")
+      next
     end
   end
   if ["GET", "POST", "DELETE"].includes? method
