@@ -21,7 +21,11 @@ server = HTTP::Server.new do |context|
     #
     # GET
     #
-    files = Dir["#{root}#{context.request.path}/*"].map{|file| File.basename file}
+    requested_path = "#{root}#{context.request.path}"
+    entries = Dir["#{requested_path}/*"]
+    dirs =  entries.select{|entry| File.directory? entry}.sort
+    files = entries.select{|entry| !File.directory? entry}.sort
+    sorted_entries = dirs + files
     context.response.print ECR.render("index.ecr")
   elsif method == "POST"
     #
