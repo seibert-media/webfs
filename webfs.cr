@@ -65,13 +65,19 @@ server = HTTP::Server.new do |context|
         end
       end
     end
-   log "name '#{name}', file '#{file}'"
+   log "name '#{name}', file #{!!file}"
     unless name && file
+      log "name or file missing"
       context.response.status = :bad_request
       next
     end
-    log "moving '#{file.path}' to '#{request_path_absolute}/#{name}'"
-    File.rename file.path, "#{request_path_absolute}/#{name}"
+    target_path = "#{request_path_absolute}/#{name}"
+    if File.exists? target_path
+      notice = log "file already exists '#{target_path}'"
+    else
+      log "moving '#{file.path}' to '#{target_path}'"
+      File.rename file.path, "#{target_path}"
+    end
   end
   if ["GET", "POST"].includes? method
     if File.directory? request_path_absolute
@@ -98,8 +104,8 @@ server = HTTP::Server.new do |context|
     end
   end
   if method == "DELETE"
-    log "deleting '#{request_path_absolute}'"
     # DELETE
+    log "deleting '#{request_path_absolute}'"
   end
 end
 
