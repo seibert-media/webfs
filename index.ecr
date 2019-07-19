@@ -2,27 +2,49 @@
 <html>
   <head>
     <title>WebFS</title>
+    <style>
+      .size {
+        text-align: right;
+      }
+    </style>
+    <script>
+      
+    </script>
   </head>
   <body>
     <table>
       <thead>
         <tr>
-          <td>Name</td>
-          <td>Size</td>
-          <td>Changed</td>
-          <td>Delete</td>
+          <td>name</td>
+          <td>size</td>
+          <td>chaned (utc)</td>
+          <td></td>
         <tr>
       </thead>
       <tbody>
         <h1>
-          <%= requested_path %>
+          <%- context.request.path.split('/').each do |element| %>
+            <a href="<%= "#{context.request.path}#{element}" %>">
+              <%= File.basename element %>/
+            </a>
+          <% end %>
         </h1>
-        <%- sorted_entries.each do |path| %>
+        <%- sorted_entries.each do |entry| %>
           <tr>
-            <td><%= File.basename path %></td>
-            <td><%= human_readable File.size(path).to_i %></td>
-            <td><%= File.info(path).modification_time %></td>
-            <td><%= File.info(path).modification_time %></td>
+            <td class=path>
+              <a href="<%= "#{context.request.path}#{File.basename entry}" %>">
+                <%= File.basename entry %>
+              </a>
+            </td>
+            <td class=size>
+              <%= File.size(entry).to_i.to_si %>
+            </td>
+            <td class=modified>
+              <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
+            </td>
+            <td class=delete>
+              <a href="<%= "#{context.request.path}#{File.basename entry}" %>">delete</a>
+            </td>
           </tr>
         <% end %>
       </tbody>
