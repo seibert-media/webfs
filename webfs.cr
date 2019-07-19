@@ -117,10 +117,10 @@ server = HTTP::Server.new do |context|
     # DELETE
     if File.directory? delete_path
       log "deleting recursively '#{delete_path}'"
-      #FileUtils.rm_rf request_path_absolute
+      #FileUtils.rm_rf delete_path
     else
       log "deleting '#{delete_path}'"
-      #FileUtils.rm request_path_absolute
+      #FileUtils.rm delete_path
     end
   end
   notice = nil # reset
