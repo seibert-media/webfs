@@ -28,7 +28,7 @@
         <% sorted_entries.each do |entry| %>
           <tr>
             <td class=path>
-              <a href="<%= "#{context.request.path}#{File.basename entry}" %>">
+              <a href="<%= "#{request_path}/#{File.basename entry}" %>">
                 <%= File.basename entry %>
               </a>
             </td>
@@ -39,13 +39,13 @@
               <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
             </td>
             <td class=delete>
-              <a href="<%= "#{context.request.path}#{File.basename entry}" %>">delete</a>
+              <a href="<%= "#{request_path}/#{File.basename entry}" %>">delete</a>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
-    <form enctype=multipart/form-data action=<%= request_path %> accept-charset=UTF-8 method=post>
+    <form enctype=multipart/form-data action="<%= "#{request_path}/" %>" accept-charset=UTF-8 method=post>
       <input name=utf8 type=hidden value="&#x2713;" />
       <input type=file name=file />
       <input type=submit name=commit value=upload data-disable-with=upload />

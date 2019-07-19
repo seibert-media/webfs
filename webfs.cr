@@ -7,6 +7,14 @@ def log(entry : String)
   puts entry
 end
 
+def filename_from_header(header : String)
+  filename_header = header.split(';')
+    .find{|e| /^filename=/ =~ e.strip}
+  if filename_header 
+    filename_header.split("=")[1].gsub(/"/, nil)
+  end
+end
+
 # get relative path
 class String
   def relative_to(root : String)
@@ -74,15 +82,7 @@ server = HTTP::Server.new do |context|
     file = nil
     HTTP::FormData.parse(context.request) do |part|
       if part.name == "file"
-        # name
-        filename_header = part.headers["Content-Disposition"].split(';')
-          .find{|e| /^filename=/ =~ e.strip}
-        if filename_header 
-          name = filename_header.split("=")[1].gsub(/"/, nil)
-        else
-          log "filename not found ind header: #{part.headers}"
-        end
-        # file
+        name = filename_from_header part.headers["Content-Disposition"]
         file = File.tempfile("upload") do |file|
           IO.copy(part.body, file)
         end
