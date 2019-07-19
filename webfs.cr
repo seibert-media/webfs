@@ -16,7 +16,6 @@ server = HTTP::Server.new do |context|
     #
     # PERMISSION ERROR
     #
-    p "ERROR"
     context.response.print "permission error"
   elsif method == "GET"
     #
