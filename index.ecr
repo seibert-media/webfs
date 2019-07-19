@@ -20,9 +20,9 @@
         <%- sorted_entries.each do |path| %>
           <tr>
             <td><%= File.basename path %></td>
-            <td><%= File.size path %></td>
+            <td><%= human_readable File.size(path).to_i %></td>
             <td><%= File.info(path).modification_time %></td>
-            <td></td>
+            <td><%= File.info(path).modification_time %></td>
           </tr>
         <% end %>
       </tbody>

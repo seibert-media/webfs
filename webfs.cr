@@ -8,6 +8,15 @@ root = i ? ARGV[i + 1] : "/"
 i = ARGV.index("--password")
 password = i ? ARGV[i + 1] : nil
 
+def human_readable(size : Int32)
+  i = 0
+  while (current_size = size/2**10) > 1
+    size = current_size
+    i += 1
+  end
+  [size, [nil, "KMGTPYZ".split("")].flatten[i]].join
+end
+
 # loop
 server = HTTP::Server.new do |context|
   context.response.content_type = "text/html"
@@ -24,7 +33,7 @@ server = HTTP::Server.new do |context|
     requested_path = "#{root}#{context.request.path}"
     entries = Dir["#{requested_path}/*"]
     dirs =  entries.select{|entry| File.directory? entry}.sort
-    files = entries.select{|entry| !File.directory? entry}.sort
+    files = entries - dirs
     sorted_entries = dirs + files
     context.response.print ECR.render("index.ecr")
   elsif method == "POST"
