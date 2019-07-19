@@ -24,26 +24,26 @@
       <tbody>
         <h1>
           <%- context.request.path.split('/').each do |element| %>
-            <a href="<%= "#{context.request.path}#{element}" %>">
-              <%= File.basename element %>/
+            <a href="<%= Path[element].relative_to root %>">
+              <%= File.basename element.to_s %>/
             </a>
           <% end %>
         </h1>
         <%- sorted_entries.each do |entry| %>
           <tr>
             <td class=path>
-              <a href="<%= "#{context.request.path}#{File.basename entry}" %>">
-                <%= File.basename entry %>
+              <a href="<%= "#{context.request.path}#{File.basename entry.to_s}" %>">
+                <%= File.basename entry.to_s %>
               </a>
             </td>
             <td class=size>
-              <%= File.size(entry).to_i.to_si %>
+              <!-- <%= File.size(entry.to_s).to_i.to_si %> -->
             </td>
             <td class=modified>
-              <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
+              <!-- <%= File.info(entry.to_s).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %> -->
             </td>
             <td class=delete>
-              <a href="<%= "#{context.request.path}#{File.basename entry}" %>">delete</a>
+              <!-- <a href="<%= "#{context.request.path}#{File.basename entry.to_s}" %>">delete</a> -->
             </td>
           </tr>
         <% end %>

@@ -8,7 +8,7 @@ root = i ? ARGV[i + 1] : "/"
 i = ARGV.index("--password")
 password = i ? ARGV[i + 1] : nil
 
-struct Path
+class String
   def relative_to(root : String)
     self.to_s[root.size..-1]
   end
@@ -17,7 +17,7 @@ end
 struct Int
   def to_si
     size = self
-    i = 0
+    i = -1
     while (current_size = size/2**10) > 1
       size = current_size
       i += 1
@@ -39,9 +39,8 @@ server = HTTP::Server.new do |context|
     #
     # GET
     #
-    requested_path = "#{root}#{context.request.path}"
-    entries = Dir["#{requested_path}/*"].map{|entry| entry}
-    dirs =  entries.select{|entry| File.directory? entry}.sort
+    entries = Dir["#{root}#{context.request.path}/*"].map{|entry| Path[entry]}
+    dirs = entries.select{|entry| File.directory? entry}.sort
     files = (entries - dirs).sort
     sorted_entries = dirs + files
     context.response.print ECR.render("index.ecr")
