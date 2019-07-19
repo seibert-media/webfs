@@ -88,6 +88,17 @@ server = HTTP::Server.new do |context|
       File.rename file.path, "#{target_path}"
     end
   end
+  if method == "DELETE"
+    delete_path = "#{root}#{post_params.not_nil!["path"]}"
+    # DELETE
+    if File.directory? delete_path
+      log "deleting recursively '#{delete_path}'"
+      #FileUtils.rm_rf delete_path
+    else
+      log "deleting '#{delete_path}'"
+      #FileUtils.rm delete_path
+    end
+  end
   if ["GET", "POST", "DELETE"].includes? method
     if File.directory? request_path_absolute
       # GET
@@ -110,17 +121,6 @@ server = HTTP::Server.new do |context|
       log "can not find '#{request_path_absolute}'"
       context.response.status = :not_found
       context.response.print "404"
-    end
-  end
-  if method == "DELETE"
-    delete_path = "#{root}#{post_params.not_nil!["path"]}"
-    # DELETE
-    if File.directory? delete_path
-      log "deleting recursively '#{delete_path}'"
-      #FileUtils.rm_rf delete_path
-    else
-      log "deleting '#{delete_path}'"
-      #FileUtils.rm delete_path
     end
   end
   notice = nil # reset
