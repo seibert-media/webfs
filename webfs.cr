@@ -1,3 +1,5 @@
+puts "WebFS starting"
+
 require "http"
 require "http/server"
 require "ecr"
@@ -5,6 +7,7 @@ require "uri"
 
 def log(entry : String)
   puts entry
+  entry
 end
 
 def filename_from_header(header : String)
@@ -12,6 +15,8 @@ def filename_from_header(header : String)
     .find{|e| /^filename=/ =~ e.strip}
   if filename_header 
     filename_header.split("=")[1].gsub(/"/, nil)
+  else
+    log "no filename in header '#{header}'"
   end
 end
 
@@ -19,9 +24,6 @@ end
 class String
   def relative_to(root : String)
     self.to_s[root.size..-1]
-  end
-
-  def absolute_in(root : String)
   end
 end
 
@@ -38,11 +40,12 @@ struct Int
   end
 end
 
-
-
 # arguments
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
+log "root '#{root}'"
+
+notice = nil
 
 # loop
 server = HTTP::Server.new do |context|
@@ -50,15 +53,10 @@ server = HTTP::Server.new do |context|
   method = context.request.method
   request_path = URI.unescape context.request.path.gsub(/\/$/, nil)
   request_path_absolute = "#{root}#{request_path}"
-  
-  p request_path_absolute
-  p File.exists? request_path_absolute
+  log "#{method} '#{request_path}'"
   if method == "POST"
-    #
     # POST
-    #
-    name = nil
-    file = nil
+    name = file = nil
     HTTP::FormData.parse(context.request) do |part|
       if part.name == "file"
         name = filename_from_header part.headers["Content-Disposition"]
@@ -67,39 +65,41 @@ server = HTTP::Server.new do |context|
         end
       end
     end
+   log "name '#{name}', file '#{file}'"
     unless name && file
       context.response.status = :bad_request
       next
     end
+    log "moving '#{file.path}' to '#{request_path_absolute}/#{name}'"
     File.rename file.path, "#{request_path_absolute}/#{name}"
   end
   if ["GET", "POST"].includes? method
     if File.directory? request_path_absolute
-      #
       # GET
-      #
-      # # title
+      ## title
       elements = request_path.split('/')
       title_elements = elements.map_with_index do |element, i|
         root + elements[0..i].join("/")
       end
-      # # entries
+      ## entries
       entries = Dir["#{request_path_absolute}/*"].map { |entry| entry }
       dirs = entries.select { |entry| File.directory? entry }.sort
       files = (entries - dirs).sort
       sorted_entries = dirs + files
+      log "index #{sorted_entries.size} entries"
       context.response.print ECR.render("index.ecr")
     elsif File.exists? request_path_absolute
+      log "download #{request_path_absolute}'"
       context.response.print "file"
     else
+      log "can not find '#{request_path_absolute}'"
       context.response.status = :not_found
       context.response.print "404"
     end
   end
   if method == "DELETE"
-    #
+    log "deleting '#{request_path_absolute}'"
     # DELETE
-    #
   end
 end
 
