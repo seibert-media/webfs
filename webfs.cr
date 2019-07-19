@@ -1,6 +1,11 @@
 require "http"
 require "http/server"
 require "ecr"
+require "uri"
+
+def log(entry : String)
+  puts entry
+end
 
 # get relative path
 class String
@@ -33,8 +38,12 @@ root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
 server = HTTP::Server.new do |context|
   context.response.content_type = "text/html"
   method = context.request.method
-  request_path = context.request.path.gsub(/\/$/, nil)
+  request_path = URI.unescape context.request.path.gsub(/\/$/, nil)
   request_path_absolute = "#{root}#{request_path}"
+  
+  p request_path_absolute
+  p File.exists? request_path_absolute
+  
   if method == "GET"
     if File.directory? request_path_absolute
       #
@@ -51,8 +60,11 @@ server = HTTP::Server.new do |context|
       files = (entries - dirs).sort
       sorted_entries = dirs + files
       context.response.print ECR.render("index.ecr")
-    else
+    elsif File.exists? request_path_absolute
       context.response.print "file"
+    else
+      context.response.status = :not_found
+      context.response.print "404"
     end
   elsif method == "POST"
     #
@@ -67,6 +79,8 @@ server = HTTP::Server.new do |context|
           .find{|e| /^filename=/ =~ e.strip}
         if filename_header 
           name = filename_header.split("=")[1].gsub(/"/, nil)
+        else
+          log "filename not found ind header: #{part.headers}"
         end
         # file
         file = File.tempfile("upload") do |file|
