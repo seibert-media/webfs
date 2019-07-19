@@ -1,24 +1,8 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>WebFS</title>
-    <style>
-      .size {
-        text-align: right;
-      }
-    </style>
-    <script>
-      
-    </script>
-  </head>
-  <body>
-    confirm delete '<%= relative_delete_path %>'
-    <form action="<%= "#{request_path}/" %>" method=post>
-      <input name=utf8 type=hidden value="&#x2713;" />
-      <input type=hidden name=_method value="DELETE" />
-      <input type=hidden name=confirm value="true" />
-      <input type=hidden name=path value="<%= "#{relative_delete_path}" %>" />
-      <input type=submit name=commit value=delete />
-    </form>
-  </body>
-</html>
+confirm delete '<%= relative_delete_path %>'
+<form action="<%= "#{request_path}/" %>" method=post>
+  <input name=utf8 type=hidden value="&#x2713;" />
+  <input type=hidden name=_method value="DELETE" />
+  <input type=hidden name=confirm value="true" />
+  <input type=hidden name=path value="<%= "#{relative_delete_path}" %>" />
+  <input type=submit name=commit value=delete />
+</form>

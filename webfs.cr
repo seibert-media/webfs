@@ -102,7 +102,9 @@ server = HTTP::Server.new do |context|
       end
     else
       log "confirm delete '#{relative_delete_path}'"
+      context.response.print ECR.render("header.ecr")
       context.response.print ECR.render("confirm_delete.ecr")
+      context.response.print ECR.render("footer.ecr")
       next
     end
   end
@@ -120,7 +122,9 @@ server = HTTP::Server.new do |context|
       files = (entries - dirs).sort
       sorted_entries = dirs + files
       log "index #{sorted_entries.size} entries"
+      context.response.print ECR.render("header.ecr")
       context.response.print ECR.render("index.ecr")
+      context.response.print ECR.render("footer.ecr")
     elsif File.exists? request_path_absolute
       log "download #{request_path_absolute}'"
       context.response.print "file"
