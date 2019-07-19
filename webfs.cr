@@ -38,6 +38,8 @@ struct Int
   end
 end
 
+
+
 # arguments
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
@@ -51,8 +53,27 @@ server = HTTP::Server.new do |context|
   
   p request_path_absolute
   p File.exists? request_path_absolute
-  
-  if method == "GET"
+  if method == "POST"
+    #
+    # POST
+    #
+    name = nil
+    file = nil
+    HTTP::FormData.parse(context.request) do |part|
+      if part.name == "file"
+        name = filename_from_header part.headers["Content-Disposition"]
+        file = File.tempfile("upload") do |file|
+          IO.copy(part.body, file)
+        end
+      end
+    end
+    unless name && file
+      context.response.status = :bad_request
+      next
+    end
+    File.rename file.path, "#{request_path_absolute}/#{name}"
+  end
+  if ["GET", "POST"].includes? method
     if File.directory? request_path_absolute
       #
       # GET
@@ -74,27 +95,8 @@ server = HTTP::Server.new do |context|
       context.response.status = :not_found
       context.response.print "404"
     end
-  elsif method == "POST"
-    #
-    # POST
-    #
-    name = nil
-    file = nil
-    HTTP::FormData.parse(context.request) do |part|
-      if part.name == "file"
-        name = filename_from_header part.headers["Content-Disposition"]
-        file = File.tempfile("upload") do |file|
-          IO.copy(part.body, file)
-        end
-      end
-    end
-    unless name && file
-      context.response.status = :bad_request
-      next
-    end
-    File.rename file.path, "#{request_path_absolute}/#{name}"
-    context.response << file.path
-  elsif method == "DELETE"
+  end
+  if method == "DELETE"
     #
     # DELETE
     #
