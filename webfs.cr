@@ -51,7 +51,9 @@ notice = nil
 server = HTTP::Server.new do |context|
   context.response.content_type = "text/html"
   method = context.request.method
-  request_path = URI.unescape context.request.path.gsub(/\/$/, nil)
+  request_path = URI.unescape(
+    context.request.path.gsub(/\/$/, nil)
+  )
   request_path_absolute = "#{root}#{request_path}"
   log "#{method} '#{request_path}'"
   if method == "POST"
@@ -107,6 +109,7 @@ server = HTTP::Server.new do |context|
     # DELETE
     log "deleting '#{request_path_absolute}'"
   end
+  notice = nil # reset
 end
 
 # start
