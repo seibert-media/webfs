@@ -4,12 +4,26 @@ def log(entry : String)
 end
 
 def filename_from_header(header : String)
-  filename_header = header.split(';')
-    .find{|e| /^filename=/ =~ e.strip}
+  filename_header = header.split(';').find{|e| /^filename=/ =~ e.strip}
   if filename_header 
     filename_header.split("=")[1].gsub(/"/, nil)
   else
     log "no filename in header '#{header}'"
+  end
+end
+
+class HTTP::Request
+  def post_params
+    @post_params ||= if body
+      HTTP::Params.parse(body.not_nil!.gets_to_end)
+    else
+       {} of String => String
+    end
+  end
+  
+  def real_method
+    param = post_params.fetch("_method", nil)
+    ["GET", "POST", "PUT", "PATCH", "DELETE"].includes? param ? param : method
   end
 end
 
