@@ -22,7 +22,7 @@
       <tr>
         <td class=path>
           <a href="<%= "#{request_path}/#{File.basename entry}" %>">
-            <%= File.basename entry %>
+            <%= File.basename entry %><%= "/" if File.directory? entry %>
           </a>
         </td>
         <td class=size>
