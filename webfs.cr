@@ -118,6 +118,7 @@ server = HTTP::Server.new do |context|
       end
       ## entries
       entries = Dir["#{request_path_absolute}/*"].map { |entry| entry }
+      entries = entries.select{|e| !File.symlink? e}
       dirs = entries.select { |entry| File.directory? entry }.sort
       files = (entries - dirs).sort
       sorted_entries = dirs + files
