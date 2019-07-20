@@ -11,10 +11,10 @@
 <table>
   <thead>
     <tr>
-      <td>name</td>
-      <td>size</td>
-      <td>chaned (utc)</td>
-      <td></td>
+      <td class=path>name</td>
+      <td class=size>size</td>
+      <td class=modified>modified (utc)</td>
+      <td class=delete></td>
     <tr>
   </thead>
   <tbody>
@@ -43,7 +43,7 @@
     <% end %>
   </tbody>
 </table>
-<form enctype=multipart/form-data action="<%= "#{request_path}/" %>" accept-charset=UTF-8 method=post>
+<form id=upload enctype=multipart/form-data action="<%= "#{request_path}/" %>" accept-charset=UTF-8 method=post>
   <input name=utf8 type=hidden value="&#x2713;" />
   <input name=file type=file />
   <input name=commit type=submit value=upload data-disable-with=upload />

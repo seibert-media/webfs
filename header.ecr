@@ -3,7 +3,32 @@
   <head>
     <title>WebFS</title>
     <style>
-      .size {
+      html {
+        font-family: sans-serif;
+      }
+      body {
+          padding: 1rem;
+      }
+      a {
+        text-decoration: none;
+      }
+      table {
+        border-collapse: separate;
+        border-spacing:  0 0.48rem;
+      }
+      tr:not(:first-child) td {
+        border-top: .07rem solid rgba(0, 0, 0, .1);
+        padding-top: .3em;
+      }
+      td:not(:first-child) {
+        padding-left: .6em;
+      }
+      .size, .modified, .delete {
+        white-space: nowrap;
+        text-align: right;
+      }
+      #upload {
+        margin-top: 1rem; 
         text-align: right;
       }
     </style>
