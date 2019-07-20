@@ -1,7 +1,7 @@
 <%= ECR.render("header.ecr") %>
 
 <h1>
-  <% title_elements.each do |element| -%><a href="<%= "#{element}/".relative_to root %>"><%= File.basename "#{element}".relative_to root %>/</a><% end %>
+  <% title_elements.each do |element| -%><a href="<%= uri_encode_path "#{element}/".relative_to root %>"><%= File.basename "#{element}".relative_to root %>/</a><% end %>
 </h1> 
 <% if notice %>
   <div class=notice>
@@ -21,7 +21,7 @@
     <% sorted_entries.each do |entry| %>
       <tr>
         <td class=path>
-          <a href="<%= "#{request_path}/#{File.basename entry}" %>">
+          <a href="<%= uri_encode_path "#{request_path}/#{File.basename entry}" %>">
             <%= File.basename entry %><%= "/" if File.directory? entry %>
           </a>
         </td>
@@ -32,7 +32,7 @@
           <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
         </td>
         <td class=delete>
-          <form action="<%= "#{request_path}/" %>" method=post>
+          <form action="<%=uri_encode_path "#{request_path}/" %>" method=post>
             <input name=utf8 type=hidden value="&#x2713;" />
             <input type=hidden name=_method value="DELETE" />
             <input type=hidden name=path value="<%= "#{request_path}/#{File.basename entry}" %>" />
@@ -43,7 +43,7 @@
     <% end %>
   </tbody>
 </table>
-<form id=upload enctype=multipart/form-data action="<%= "#{request_path}/" %>" accept-charset=UTF-8 method=post>
+<form id=upload enctype=multipart/form-data action="<%=uri_encode_path "#{request_path}/" %>" accept-charset=UTF-8 method=post>
   <input name=utf8 type=hidden value="&#x2713;" />
   <input name=file type=file />
   <input name=commit type=submit value=upload data-disable-with=upload />

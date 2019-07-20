@@ -9,6 +9,10 @@ def filename_from_header(header : String)
   filename == "" ? nil : filename
 end
 
+def uri_encode_path(path : String)
+  path.split("/").map{|element| URI.escape element}.join("/")
+end
+
 class HTTP::Request
   def content_type
     headers["Content-Type"].split(";")[0]
