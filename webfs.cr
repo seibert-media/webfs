@@ -11,10 +11,10 @@ require "./lib"
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
 log "root '#{root}'"
-notice = nil
 
 ################ LOOP
 server = HTTP::Server.new do |context|
+  notice = nil
   request, response = context.request, context.response
   method = request.real_method
   request_path = URI.unescape(request.path.gsub(/\/$/, nil))
@@ -23,7 +23,11 @@ server = HTTP::Server.new do |context|
   ################ POST
   if method == "POST"
     name = file = nil
-    HTTP::FormData.parse(context.request) do |part|
+    p 1
+    p request
+    p request.content_type
+    HTTP::FormData.parse(request) do |part|
+      p 2
       if part.name == "file"
         name = filename_from_header part.headers["Content-Disposition"]
         file = File.tempfile("upload") do |file|
@@ -95,7 +99,6 @@ server = HTTP::Server.new do |context|
     response.status = :not_found
     response.print "404"
   end
-  notice = nil # reset
 end
 
 # start
