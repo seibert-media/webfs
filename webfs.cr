@@ -73,8 +73,6 @@ server = HTTP::Server.new do |context|
         else
           confirm_delete = true
         end
-      else
-        log "unhandled post"
       end
     end
   end
@@ -83,11 +81,11 @@ server = HTTP::Server.new do |context|
   #
   response.content_type = "text/html"
   if confirm_delete
-    ################ COFIRM DELETE
-    log "confirm delete '#{relative_delete_path}'"
+    # COFIRM DELETE
     response.print ECR.render("confirm_delete.ecr")
+    log "confirm delete '#{relative_delete_path}'"
   elsif File.directory? request_path_absolute
-    ################ INDEX
+    # INDEX
     # build title
     elements = request_path.split('/')
     title_elements = elements.map_with_index do |element, i|
@@ -99,22 +97,22 @@ server = HTTP::Server.new do |context|
     dirs = entries.select {|entry| File.directory? entry}.sort
     files = (entries - dirs).sort
     sorted_entries = dirs + files
-    log "index #{sorted_entries.size} entries"
     # render
     response.print ECR.render("index.ecr")
+    log "index #{sorted_entries.size} entries"
   elsif File.exists? request_path_absolute
     ################ FILE
-    log "download #{request_path_absolute}'"
     response.headers["Content-Type"] = "application/octet-stream"
     response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
     File.open request_path_absolute, "r" do |f|
       IO.copy f, response.output
     end
+    log "download #{request_path_absolute}'"
   else
     ################ NOT FOUND
-    log "can not find '#{request_path_absolute}'"
     response.status = :not_found
     response.print "404"
+    log "can not find '#{request_path_absolute}'"
   end
 end
 

@@ -17,25 +17,6 @@ class HTTP::Request
     headers["Content-Type"].split(";")[0]
   end
   
-  def file
-    # get posted file
-    HTTP::FormData.parse(self) do |part|
-      if part.name == "file"
-        name = filename_from_header part.headers["Content-Disposition"]
-        file = File.tempfile("upload") do |file|
-          IO.copy(part.body, file)
-        end
-      end
-     log "name '#{name}', file #{!!file}"
-      unless name && file
-        log "name or file missing"
-        response.status = :bad_request
-        next
-      end
-      return name, file
-    end
-  end
-  
   def post_params
     @post_params ||= if body
       HTTP::Params.parse(body.not_nil!.gets_to_end)
