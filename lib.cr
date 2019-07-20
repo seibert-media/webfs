@@ -23,7 +23,7 @@ class HTTP::Request
   
   def real_method
     param = post_params.fetch("_method", nil)
-    ["GET", "POST", "PUT", "PATCH", "DELETE"].includes? param ? param : method
+    ["GET", "POST", "PUT", "PATCH", "DELETE"].includes?(param) ? param : method
   end
 end
 
