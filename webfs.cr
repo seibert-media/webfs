@@ -7,30 +7,36 @@ require "uri"
 require "file_utils"
 require "./lib"
 
-# arguments
+#
+# ARGUMENTS
+#
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
 log "root '#{root}'"
 
-################ LOOP
+#
+# LOOP
+#
 server = HTTP::Server.new do |context|
-  notice = nil
+  #
+  # REQUEST
+  #
   request, response = context.request, context.response
   method = request.method
   request_path = URI.unescape(request.path.gsub(/\/$/, nil))
   request_path_absolute = "#{root}/#{Path[request_path].normalize}"
+  notice = nil
   log "#{method} '#{request_path}'"
-  ################ POST
+  # POST
   if method == "POST"
     name = file = nil
-    p request.content_type
-    if request.content_type == "multipart/form-data"
+    case request.content_type
+    when "multipart/form-data"
+      # UPLOAD
       HTTP::FormData.parse(request) do |part|
-        p part.name
         case part.name
         when "_method"
           method_param = part.body
-          p method_param
         when "file"
           name = filename_from_header part.headers["Content-Disposition"]
           file = File.tempfile("upload") do |file|
@@ -51,27 +57,32 @@ server = HTTP::Server.new do |context|
         log "moving '#{file.path}' to '#{target_path}'"
         File.rename file.path, "#{target_path}"
       end
-    elsif request.content_type == "application/x-www-form-urlencoded"
-      method = request.real_method
-    end
-  end
-  ################ DELETE
-  if method == "DELETE"
-    relative_delete_path = request.post_params["path"]
-    delete_path = "#{root}#{relative_delete_path}"
-    if request.post_params.fetch("confirm", nil) == "true"
-      if File.directory? delete_path
-        log "deleting recursively '#{relative_delete_path}'"
-        #FileUtils.rm_rf delete_path
+    when "application/x-www-form-urlencoded"
+      # DELETE
+      if request.post_params.fetch("_method", nil) == "DELETE"
+        relative_delete_path = request.post_params["path"]
+        delete_path = "#{root}#{relative_delete_path}"
+        if request.post_params.fetch("confirm", nil) == "true"
+          if File.directory? delete_path
+            log "deleting recursively '#{relative_delete_path}'"
+            #FileUtils.rm_rf delete_path
+          else
+            log "deleting '#{relative_delete_path}'"
+            #FileUtils.rm delete_path
+          end
+        else
+          confirm_delete = true
+        end
       else
-        log "deleting '#{relative_delete_path}'"
-        #FileUtils.rm delete_path
+        log "unhandled post"
       end
     end
   end
-  ################ RENDER
+  #
+  # RESPONSE
+  #
   response.content_type = "text/html"
-  if method == "DELETE" && request.post_params.fetch("confirm", nil) != "true"
+  if confirm_delete
     ################ COFIRM DELETE
     log "confirm delete '#{relative_delete_path}'"
     response.print ECR.render("confirm_delete.ecr")
