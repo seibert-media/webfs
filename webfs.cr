@@ -127,7 +127,11 @@ server = HTTP::Server.new do |context|
       context.response.print ECR.render("footer.ecr")
     elsif File.exists? request_path_absolute
       log "download #{request_path_absolute}'"
-      context.response.print "file"
+      context.response.headers["Content-Type"] = "application/octet-stream"
+      context.response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
+      File.open request_path_absolute, "r" do |f|
+        IO.copy f, context.response.output
+      end
     else
       log "can not find '#{request_path_absolute}'"
       context.response.status = :not_found
