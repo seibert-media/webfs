@@ -28,54 +28,59 @@ server = HTTP::Server.new do |context|
   notice = nil
   log "#{method} '#{request_path}'"
   # POST
-  if method == "POST"
-    name = file = nil
-    case request.content_type
-    when "multipart/form-data"
-      # UPLOAD
-      HTTP::FormData.parse(request) do |part|
-        case part.name
-        when "_method"
-          method_param = part.body
-        when "file"
-          name = filename_from_header part.headers["Content-Disposition"]
-          file = File.tempfile("upload") do |file|
-            IO.copy(part.body, file)
+  if File.real_path(request_path_absolute).starts_with?(root)
+    if method == "POST"
+      name = file = nil
+      case request.content_type
+      when "multipart/form-data"
+        # UPLOAD
+        HTTP::FormData.parse(request) do |part|
+          case part.name
+          when "_method"
+            method_param = part.body
+          when "file"
+            name = filename_from_header part.headers["Content-Disposition"]
+            file = File.tempfile("upload") do |file|
+              IO.copy(part.body, file)
+            end
           end
         end
-      end
-     log "name '#{name}', file #{!!file}"
-      unless name && file
-        log "name or file missing"
-        response.status = :bad_request
-        next
-      end
-      target_path = "#{request_path_absolute}/#{name}"
-      if File.exists? target_path
-        notice = log "file already exists '#{target_path}'"
-      else
-        log "moving '#{file.path}' to '#{target_path}'"
-        File.rename file.path, "#{target_path}"
-      end
-    when "application/x-www-form-urlencoded"
-      # DELETE
-      if request.post_params.fetch("_method", nil) == "DELETE"
-        relative_delete_path = request.post_params["path"]
-        delete_path = "#{root}#{relative_delete_path}"
-        if request.post_params.fetch("confirm", nil) == "true"
-          if File.directory? delete_path
-            log "deleting recursively '#{relative_delete_path}'"
-            FileUtils.rm_rf delete_path
-          else
-            log "deleting '#{relative_delete_path}'"
-            FileUtils.rm delete_path
-          end
+       log "name '#{name}', file #{!!file}"
+        unless name && file
+          log "name or file missing"
+          response.status = :bad_request
+          next
+        end
+        target_path = "#{request_path_absolute}/#{name}"
+        if File.exists? target_path
+          notice = log "file already exists '#{target_path}'"
         else
-          confirm_delete = true
+          log "moving '#{file.path}' to '#{target_path}'"
+          File.rename file.path, "#{target_path}"
+        end
+      when "application/x-www-form-urlencoded"
+        # DELETE
+        if request.post_params.fetch("_method", nil) == "DELETE"
+          relative_delete_path = request.post_params["path"]
+          delete_path = "#{root}#{relative_delete_path}"
+          if request.post_params.fetch("confirm", nil) == "true"
+            if File.directory? delete_path
+              log "deleting recursively '#{relative_delete_path}'"
+              FileUtils.rm_rf delete_path
+            else
+              log "deleting '#{relative_delete_path}'"
+              FileUtils.rm delete_path
+            end
+          else
+            confirm_delete = true
+          end
         end
       end
     end
+  else
+    permission_error = true
   end
+
   #
   # RESPONSE
   #
@@ -84,6 +89,11 @@ server = HTTP::Server.new do |context|
     # COFIRM DELETE
     response.print ECR.render("confirm_delete.ecr")
     log "confirm delete '#{relative_delete_path}'"
+  elsif permission_error
+    # NOT FOUND
+    response.status = :unauthorized
+    response.print "401"
+    log "not allowed '#{request_path_absolute}'"
   elsif File.directory? request_path_absolute
     # INDEX
     # build title
@@ -93,8 +103,12 @@ server = HTTP::Server.new do |context|
     end
     # collect entries
     entries = Dir["#{request_path_absolute}/*"].map{|entry| entry}
+    symlinks = entries.select{|entry| File.symlink? entry}.each do |e|
+      
+      p File.info e
+    end
     entries = entries.select{|e| !File.symlink? e}
-    dirs = entries.select {|entry| File.directory? entry}.sort
+    dirs = entries.select{|entry| File.directory? entry}.sort
     files = (entries - dirs).sort
     sorted_entries = dirs + files
     # render
