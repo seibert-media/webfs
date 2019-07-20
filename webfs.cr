@@ -5,66 +5,26 @@ require "http/server"
 require "ecr"
 require "uri"
 require "file_utils"
-
-def log(entry : String)
-  puts entry
-  entry
-end
-
-def filename_from_header(header : String)
-  filename_header = header.split(';')
-    .find{|e| /^filename=/ =~ e.strip}
-  if filename_header 
-    filename_header.split("=")[1].gsub(/"/, nil)
-  else
-    log "no filename in header '#{header}'"
-  end
-end
-
-# get relative path
-class String
-  def relative_to(root : String)
-    self.to_s[root.size..-1]
-  end
-end
-
-# format int as si
-struct Int
-  def to_si
-    size = self
-    i = 0
-    while (current_size = size/2**10) > 1
-      size = current_size
-      i += 1
-    end
-    [size, [nil, "KMGTPYZ".split("")].flatten[i]].join
-  end
-end
+require "./lib"
 
 # arguments
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
 log "root '#{root}'"
-
 notice = nil
 
-# loop
+############################# LOOP
 server = HTTP::Server.new do |context|
-  context.response.content_type = "text/html"
   method = context.request.method
-  # get post params
   if context.request.body
     post_params = HTTP::Params.parse context.request.body.not_nil!.gets_to_end
-    p post_params
     method = "DELETE" if post_params.fetch("_method", "") == "DELETE"
   end
-  request_path = URI.unescape(
-    context.request.path.gsub(/\/$/, nil)
-  )
-  request_path_absolute = "#{root}#{request_path}"
+  request_path = URI.unescape(context.request.path.gsub(/\/$/, nil))
+  request_path_absolute = "#{root}/#{Path[request_path].normalize}"
   log "#{method} '#{request_path}'"
+  ############################# POST
   if method == "POST"
-    # POST
     name = file = nil
     HTTP::FormData.parse(context.request) do |part|
       if part.name == "file"
@@ -88,10 +48,10 @@ server = HTTP::Server.new do |context|
       File.rename file.path, "#{target_path}"
     end
   end
+  ############################# DELETE
   if method == "DELETE"
     relative_delete_path = post_params.not_nil!["path"]
     delete_path = "#{root}#{relative_delete_path}"
-    # DELETE
     if post_params.not_nil!.fetch("confirm", nil) == "true"
       if File.directory? delete_path
         log "deleting recursively '#{relative_delete_path}'"
@@ -100,44 +60,43 @@ server = HTTP::Server.new do |context|
         log "deleting '#{relative_delete_path}'"
         #FileUtils.rm delete_path
       end
-    else
-      log "confirm delete '#{relative_delete_path}'"
-      context.response.print ECR.render("header.ecr")
-      context.response.print ECR.render("confirm_delete.ecr")
-      context.response.print ECR.render("footer.ecr")
-      next
     end
   end
-  if ["GET", "POST", "DELETE"].includes? method
-    if File.directory? request_path_absolute
-      # GET
-      ## title
-      elements = request_path.split('/')
-      title_elements = elements.map_with_index do |element, i|
-        root + elements[0..i].join("/")
-      end
-      ## entries
-      entries = Dir["#{request_path_absolute}/*"].map { |entry| entry }
-      entries = entries.select{|e| !File.symlink? e}
-      dirs = entries.select { |entry| File.directory? entry }.sort
-      files = (entries - dirs).sort
-      sorted_entries = dirs + files
-      log "index #{sorted_entries.size} entries"
-      context.response.print ECR.render("header.ecr")
-      context.response.print ECR.render("index.ecr")
-      context.response.print ECR.render("footer.ecr")
-    elsif File.exists? request_path_absolute
-      log "download #{request_path_absolute}'"
-      context.response.headers["Content-Type"] = "application/octet-stream"
-      context.response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
-      File.open request_path_absolute, "r" do |f|
-        IO.copy f, context.response.output
-      end
-    else
-      log "can not find '#{request_path_absolute}'"
-      context.response.status = :not_found
-      context.response.print "404"
+  ############################# RENDER
+  context.response.content_type = "text/html"
+  if method == "DELETE" && post_params.not_nil!.fetch("confirm", nil) != "true"
+    ############################# COFIRM DELETE
+    log "confirm delete '#{relative_delete_path}'"
+    context.response.print ECR.render("confirm_delete.ecr")
+  elsif File.directory? request_path_absolute
+    ############################# INDEX
+    # build title
+    elements = request_path.split('/')
+    title_elements = elements.map_with_index do |element, i|
+      root + elements[0..i].join("/")
     end
+    # collect entries
+    entries = Dir["#{request_path_absolute}/*"].map { |entry| entry }
+    entries = entries.select{|e| !File.symlink? e}
+    dirs = entries.select { |entry| File.directory? entry }.sort
+    files = (entries - dirs).sort
+    sorted_entries = dirs + files
+    log "index #{sorted_entries.size} entries"
+    # render
+    context.response.print ECR.render("index.ecr")
+  elsif File.exists? request_path_absolute
+    ############################# FILE
+    log "download #{request_path_absolute}'"
+    context.response.headers["Content-Type"] = "application/octet-stream"
+    context.response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
+    File.open request_path_absolute, "r" do |f|
+      IO.copy f, context.response.output
+    end
+  else
+    ############################# NOT FOUND
+    log "can not find '#{request_path_absolute}'"
+    context.response.status = :not_found
+    context.response.print "404"
   end
   notice = nil # reset
 end

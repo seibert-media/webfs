@@ -1,3 +1,5 @@
+<%= ECR.render("header.ecr") %>
+
 <h1>
   <% title_elements.each do |element| -%><a href="<%= "#{element}/".relative_to root %>"><%= File.basename "#{element}".relative_to root %>/</a><% end %>
 </h1> 
@@ -46,3 +48,5 @@
   <input type=file name=file />
   <input type=submit name=commit value=upload data-disable-with=upload />
 </form>
+
+<%= ECR.render("footer.ecr") %>
