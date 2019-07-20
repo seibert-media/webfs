@@ -7,16 +7,12 @@ require "uri"
 require "file_utils"
 require "./lib"
 
-#
 # ARGUMENTS
-#
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
 log "root '#{root}'"
 
-#
 # LOOP
-#
 server = HTTP::Server.new do |context|
   #
   # REQUEST
@@ -28,7 +24,9 @@ server = HTTP::Server.new do |context|
   notice = nil
   log "#{method} '#{request_path}'"
   # POST
-  if File.real_path(request_path_absolute).starts_with?(root)
+  if !File.real_path(request_path_absolute).starts_with?(root)
+    permission_error = true
+  else
     if method == "POST"
       name = file = nil
       case request.content_type
@@ -77,8 +75,6 @@ server = HTTP::Server.new do |context|
         end
       end
     end
-  else
-    permission_error = true
   end
 
   #
@@ -104,7 +100,6 @@ server = HTTP::Server.new do |context|
     # collect entries
     entries = Dir["#{request_path_absolute}/*"].map{|entry| entry}
     symlinks = entries.select{|entry| File.symlink? entry}.each do |e|
-      
       p File.info e
     end
     entries = entries.select{|e| !File.symlink? e}
