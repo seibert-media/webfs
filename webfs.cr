@@ -65,10 +65,10 @@ server = HTTP::Server.new do |context|
         if request.post_params.fetch("confirm", nil) == "true"
           if File.directory? delete_path
             log "deleting recursively '#{relative_delete_path}'"
-            #FileUtils.rm_rf delete_path
+            FileUtils.rm_rf delete_path
           else
             log "deleting '#{relative_delete_path}'"
-            #FileUtils.rm delete_path
+            FileUtils.rm delete_path
           end
         else
           confirm_delete = true
@@ -101,7 +101,7 @@ server = HTTP::Server.new do |context|
     response.print ECR.render("index.ecr")
     log "index #{sorted_entries.size} entries"
   elsif File.exists? request_path_absolute
-    ################ FILE
+    # DOWNLOAD
     response.headers["Content-Type"] = "application/octet-stream"
     response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
     File.open request_path_absolute, "r" do |f|
@@ -109,7 +109,7 @@ server = HTTP::Server.new do |context|
     end
     log "download #{request_path_absolute}'"
   else
-    ################ NOT FOUND
+    # NOT FOUND
     response.status = :not_found
     response.print "404"
     log "can not find '#{request_path_absolute}'"
