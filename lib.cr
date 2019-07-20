@@ -5,11 +5,8 @@ end
 
 def filename_from_header(header : String)
   filename_header = header.split(';').find{|e| /^filename=/ =~ e.strip}
-  if filename_header 
-    filename_header.split("=")[1].gsub(/"/, nil)
-  else
-    log "no filename in header '#{header}'"
-  end
+  filename = filename_header.to_s.split("=")[1].gsub(/"/, nil)
+  filename == "" ? nil : filename
 end
 
 class HTTP::Request

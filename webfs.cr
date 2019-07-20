@@ -17,17 +17,16 @@ server = HTTP::Server.new do |context|
   #
   # REQUEST
   #
+  notice = permission_error = confirm_delete = nil
   request, response = context.request, context.response
-  method = request.method
   request_path = URI.unescape(request.path.gsub(/\/$/, nil))
   request_path_absolute = "#{root}/#{Path[request_path].normalize}"
-  notice = nil
-  log "#{method} '#{request_path}'"
+  log "#{request.method} '#{request_path}'"
   # POST
   if !File.real_path(request_path_absolute).starts_with?(root)
     permission_error = true
   else
-    if method == "POST"
+    if request.method == "POST"
       name = file = nil
       case request.content_type
       when "multipart/form-data"
@@ -43,18 +42,18 @@ server = HTTP::Server.new do |context|
             end
           end
         end
-       log "name '#{name}', file #{!!file}"
-        unless name && file
-          log "name or file missing"
-          response.status = :bad_request
-          next
-        end
-        target_path = "#{request_path_absolute}/#{name}"
-        if File.exists? target_path
-          notice = log "file already exists '#{target_path}'"
+        log "name '#{name}', file #{!!file}"
+        if name && file
+          target_path = "#{request_path_absolute}/#{name}"
+          if File.exists? target_path
+            notice = log "file already exists '#{target_path}'"
+          else
+            log "moving '#{file.path}' to '#{target_path}'"
+            File.rename file.path, "#{target_path}"
+          end
         else
-          log "moving '#{file.path}' to '#{target_path}'"
-          File.rename file.path, "#{target_path}"
+          notice = log "upload error"
+          response.status = :bad_request
         end
       when "application/x-www-form-urlencoded"
         # DELETE
@@ -76,7 +75,6 @@ server = HTTP::Server.new do |context|
       end
     end
   end
-
   #
   # RESPONSE
   #
