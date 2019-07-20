@@ -26,7 +26,7 @@
           </a>
         </td>
         <td class=size>
-          <%= File.size(entry).to_i.to_si %>
+          <%= File.size(entry).to_i.to_si unless File.symlink?(entry) %>
         </td>
         <td class=modified>
           <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
