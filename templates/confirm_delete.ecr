@@ -1,0 +1,22 @@
+<%= ECR.render("templates/header.ecr") %>
+
+confirm delete <%= File.directory?(delete_path.to_s) ? "directory" : "file" %> '<%= relative_delete_path %>'
+
+<% if File.directory? delete_path.to_s %>
+  <ul>
+    <li><%= relative_delete_path %></li>
+    <% Dir["#{delete_path}/**"].each do |path| %>
+      <li><%= path.relative_to root %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<form action="<%= "#{request_path}/" %>" method=post>
+  <input name=utf8 type=hidden value="&#x2713;" />
+  <input type=hidden name=_method value="DELETE" />
+  <input type=hidden name=confirm value="true" />
+  <input type=hidden name=path value="<%= "#{relative_delete_path}" %>" />
+  <input type=submit name=commit value=delete />
+</form>
+
+<%= ECR.render("templates/footer.ecr") %>

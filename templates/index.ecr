@@ -1,4 +1,4 @@
-<%= ECR.render("header.ecr") %>
+<%= ECR.render("templates/header.ecr") %>
 
 <h1>
   <% title_elements.each_with_index do |element, i| -%><a href="<%= uri_encode_path "#{element}/".relative_to root %>"><%= "home" if i == 0%><%= File.basename "#{element}".relative_to root %>/</a><% end %>
@@ -49,4 +49,4 @@
   <input name=commit type=submit value=upload data-disable-with=upload />
 </form>
 
-<%= ECR.render("footer.ecr") %>
+<%= ECR.render("templates/footer.ecr") %>

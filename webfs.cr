@@ -81,7 +81,7 @@ server = HTTP::Server.new do |context|
   response.content_type = "text/html"
   if confirm_delete
     # COFIRM DELETE
-    response.print ECR.render("confirm_delete.ecr")
+    response.print ECR.render("templates/confirm_delete.ecr")
     log "confirm delete '#{relative_delete_path}'"
   elsif permission_error
     # NOT FOUND
@@ -101,7 +101,7 @@ server = HTTP::Server.new do |context|
     files = (entries - dirs).sort
     sorted_entries = dirs + files
     # render
-    response.print ECR.render("index.ecr")
+    response.print ECR.render("templates/index.ecr")
     log "index #{sorted_entries.size} entries"
   elsif File.exists? request_path_absolute
     # DOWNLOAD
