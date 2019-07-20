@@ -39,9 +39,14 @@ struct Int
   def to_si
     size = self
     i = 0
-    while (current_size = size/2**10) > 1
+    while (current_size = size.to_f/2**10) > 1
       size = current_size
       i += 1
+    end
+    size = if i > 0 && (decimals = 4 - size.to_i.to_s.size) > 0
+      sprintf "%.#{decimals}f", size
+    else
+      size.to_i.to_s
     end
     [size, [nil, "KMGTPYZ".split("")].flatten[i]].join
   end
