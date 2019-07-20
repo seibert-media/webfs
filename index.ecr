@@ -45,8 +45,8 @@
 </table>
 <form enctype=multipart/form-data action="<%= "#{request_path}/" %>" accept-charset=UTF-8 method=post>
   <input name=utf8 type=hidden value="&#x2713;" />
-  <input type=file name=file />
-  <input type=submit name=commit value=upload data-disable-with=upload />
+  <input name=file type=file />
+  <input name=commit type=submit value=upload data-disable-with=upload />
 </form>
 
 <%= ECR.render("footer.ecr") %>

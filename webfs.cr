@@ -23,11 +23,7 @@ server = HTTP::Server.new do |context|
   ################ POST
   if method == "POST"
     name = file = nil
-    p 1
-    p request
-    p request.content_type
     HTTP::FormData.parse(request) do |part|
-      p 2
       if part.name == "file"
         name = filename_from_header part.headers["Content-Disposition"]
         file = File.tempfile("upload") do |file|
