@@ -16,33 +16,43 @@ log "root '#{root}'"
 server = HTTP::Server.new do |context|
   notice = nil
   request, response = context.request, context.response
-  method = request.real_method
+  method = request.method
   request_path = URI.unescape(request.path.gsub(/\/$/, nil))
   request_path_absolute = "#{root}/#{Path[request_path].normalize}"
   log "#{method} '#{request_path}'"
   ################ POST
   if method == "POST"
     name = file = nil
-    HTTP::FormData.parse(request) do |part|
-      if part.name == "file"
-        name = filename_from_header part.headers["Content-Disposition"]
-        file = File.tempfile("upload") do |file|
-          IO.copy(part.body, file)
+    p request.content_type
+    if request.content_type == "multipart/form-data"
+      HTTP::FormData.parse(request) do |part|
+        p part.name
+        case part.name
+        when "_method"
+          method_param = part.body
+          p method_param
+        when "file"
+          name = filename_from_header part.headers["Content-Disposition"]
+          file = File.tempfile("upload") do |file|
+            IO.copy(part.body, file)
+          end
         end
       end
-    end
-   log "name '#{name}', file #{!!file}"
-    unless name && file
-      log "name or file missing"
-      response.status = :bad_request
-      next
-    end
-    target_path = "#{request_path_absolute}/#{name}"
-    if File.exists? target_path
-      notice = log "file already exists '#{target_path}'"
-    else
-      log "moving '#{file.path}' to '#{target_path}'"
-      File.rename file.path, "#{target_path}"
+     log "name '#{name}', file #{!!file}"
+      unless name && file
+        log "name or file missing"
+        response.status = :bad_request
+        next
+      end
+      target_path = "#{request_path_absolute}/#{name}"
+      if File.exists? target_path
+        notice = log "file already exists '#{target_path}'"
+      else
+        log "moving '#{file.path}' to '#{target_path}'"
+        File.rename file.path, "#{target_path}"
+      end
+    elsif request.content_type == "application/x-www-form-urlencoded"
+      method = request.real_method
     end
   end
   ################ DELETE

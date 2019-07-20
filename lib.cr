@@ -13,6 +13,10 @@ def filename_from_header(header : String)
 end
 
 class HTTP::Request
+  def content_type
+    headers["Content-Type"].split(";")[0]
+  end
+  
   def post_params
     @post_params ||= if body
       HTTP::Params.parse(body.not_nil!.gets_to_end)
