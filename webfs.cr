@@ -125,6 +125,6 @@ server = HTTP::Server.new do |context|
 end
 
 # start
-address = server.bind_tcp 3030
+address = server.bind_tcp "0.0.0.0", 3030
 puts "Listening on http://#{address}"
 server.listen
