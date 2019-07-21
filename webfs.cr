@@ -5,6 +5,7 @@ require "http/server"
 require "ecr"
 require "uri"
 require "file_utils"
+require "mime"
 require "./lib"
 
 # ARGUMENTS
@@ -105,7 +106,11 @@ server = HTTP::Server.new do |context|
     log "index #{sorted_entries.size} entries"
   elsif File.exists? request_path_absolute
     # DOWNLOAD
-    response.headers["Content-Type"] = "application/octet-stream"
+    if MIME.from_filename? request_path_absolute
+      response.headers["Content-Type"] = MIME.from_filename request_path_absolute
+    else
+      response.headers["Content-Type"] = "application/octet-stream"
+    end
     response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
     File.open request_path_absolute, "r" do |f|
       IO.copy f, response.output
