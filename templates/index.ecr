@@ -43,10 +43,12 @@
     <% end %>
   </tbody>
 </table>
-<form id=upload enctype=multipart/form-data action="<%=uri_encode_path "#{request_path}/" %>" accept-charset=UTF-8 method=post>
-  <input name=utf8 type=hidden value="&#x2713;" />
-  <input name=file type=file />
-  <input name=commit type=submit value=upload data-disable-with=upload />
-</form>
+<% if File.writable? request_path %>
+  <form id=upload enctype=multipart/form-data action="<%=uri_encode_path "#{request_path}/" %>" accept-charset=UTF-8 method=post>
+    <input name=utf8 type=hidden value="&#x2713;" />
+    <input name=file type=file />
+    <input name=commit type=submit value=upload data-disable-with=upload />
+  </form>
 
-<%= ECR.render("templates/footer.ecr") %>
+  <%= ECR.render("templates/footer.ecr") %>
+<% end %>
