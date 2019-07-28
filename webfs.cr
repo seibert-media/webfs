@@ -38,24 +38,17 @@ server = HTTP::Server.new do |context|
             method_param = part.body
           when "file"
             name = filename_from_header part.headers["Content-Disposition"]
-            file = File.tempfile("upload") do |file|
-              IO.copy(part.body, file)
+            target_path = Path["#{request_path_absolute}/#{name}"].normalize.to_s
+            if File.exists? target_path
+              notice = log "file already exists '#{target_path}'"
+            else
+              file = File.open target_path, "w" do |file|
+                IO.copy(part.body, file)
+              end
             end
           end
         end
         log "name '#{name}', file #{!!file}"
-        if name && file
-          target_path = "#{request_path_absolute}/#{name}"
-          if File.exists? target_path
-            notice = log "file already exists '#{target_path}'"
-          else
-            log "moving '#{file.path}' to '#{target_path}'"
-            File.rename file.path, "#{target_path}"
-          end
-        else
-          notice = log "upload error"
-          response.status = :bad_request
-        end
       when "application/x-www-form-urlencoded"
         # DELETE
         if request.post_params.fetch("_method", nil) == "DELETE"
