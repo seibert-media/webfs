@@ -8,6 +8,8 @@ require "file_utils"
 require "mime"
 require "./lib"
 
+STDOUT.sync = true
+
 # ARGUMENTS
 i = ARGV.index("--root")
 root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
@@ -34,8 +36,6 @@ server = HTTP::Server.new do |context|
         # UPLOAD
         HTTP::FormData.parse(request) do |part|
           case part.name
-          when "_method"
-            method_param = part.body
           when "file"
             name = filename_from_header part.headers["Content-Disposition"]
             target_path = Path["#{request_path_absolute}/#{name}"].normalize.to_s
