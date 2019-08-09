@@ -48,6 +48,6 @@ struct Int
     else
       size.to_i.to_s
     end
-    size + " KMGTPYZ".split("").flatten[i].chomp
+    size + "B KiB MiB GiB TiB PiB EiB ZiB YiB".split(" ")[i]
   end
 end
