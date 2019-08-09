@@ -50,14 +50,14 @@
       download zipped folder
     </a>
   </li>
-  <li>
-    <% if File.writable? request_path_absolute %>
+  <% if File.writable? request_path_absolute %>
+    <li>
       <form id=upload enctype=multipart/form-data action="<%=uri_encode_path "#{request_path}/" %>" accept-charset=UTF-8 method=post>
         <input name=utf8 type=hidden value="&#x2713;" />
         <input name=file type=file />
         <input name=commit type=submit value=upload data-disable-with=upload />
       </form>
+    </li>
     <% end %>
-  </li>
 </ul>
 <%= ECR.render("templates/footer.ecr") %>
