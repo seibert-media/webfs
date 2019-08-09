@@ -43,11 +43,10 @@ struct Int
       size = current_size
       i += 1
     end
-    size = if i > 0 && (decimals = 3 - size.to_i.to_s.size) > 0
+    if i > 0 && (decimals = 3 - size.to_i.to_s.size) > 0
       sprintf "%.#{decimals}f", size
     else
       size.to_i.to_s
-    end
-    size + " " + "B KiB MiB GiB TiB PiB EiB ZiB YiB".split(" ")[i]
+    end + " " + %w(B KiB MiB GiB TiB PiB EiB ZiB YiB)[i]
   end
 end
