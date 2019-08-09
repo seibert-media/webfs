@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8">
     <title>WebFS</title>
     <style>
       html {
@@ -28,9 +29,20 @@
         white-space: nowrap;
         text-align: right;
       }
-      #upload {
+      .footer {
         margin-top: 1rem; 
         text-align: right;
+      }
+      .footer li {
+        display: inline-block;
+        list-style-type: none;
+      }
+      .footer li:not(:first-child):before {
+        content: '•';
+        padding: 0 .5em
+      }
+      .footer li form {
+        display: inline-block;
       }
     </style>
     <script>

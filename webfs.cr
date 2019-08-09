@@ -4,6 +4,7 @@ require "http"
 require "http/server"
 require "ecr"
 require "uri"
+require "zip"
 require "file_utils"
 require "mime"
 require "./lib"
@@ -82,6 +83,18 @@ server = HTTP::Server.new do |context|
     response.status = :unauthorized
     response.print "401"
     log "not allowed '#{request_path_absolute}'"
+  elsif request.query_params.fetch("download", false) == "zip"
+    # DOWNLOAD ZIP
+    response.headers["Content-Type"] = "application/zip"
+    response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}.zip\""
+    Zip::Writer.open(response.output) do |zip|
+      Dir.glob("#{request_path_absolute}/**/*").each do |target_path|
+        next if File.directory? target_path
+        relative_path = target_path.relative_to request_path_absolute
+        zip.add relative_path, File.open(target_path)
+      end
+    end
+    log "download zipped '#{request_path_absolute}'"
   elsif File.directory? request_path_absolute
     # INDEX
     # build title
