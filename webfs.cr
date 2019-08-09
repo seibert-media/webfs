@@ -12,9 +12,18 @@ require "./lib"
 STDOUT.sync = true
 
 # ARGUMENTS
+# root
 i = ARGV.index("--root")
-root = i ? ARGV[i + 1].gsub(/\/$/, nil) : "/"
+root = i ? ARGV[i + 1].gsub(/\/$/, nil) : Path["~"].expand.to_s
 log "root '#{root}'"
+# listen
+i = ARGV.index("--listen")
+listen = i ? ARGV[i + 1] : "127.0.0.1"
+log "listen #{listen}"
+# port
+i = ARGV.index("--port")
+port = i ? ARGV[i + 1].to_i : 3030
+log "port #{port}"
 
 # LOOP
 server = HTTP::Server.new do |context|
@@ -90,6 +99,7 @@ server = HTTP::Server.new do |context|
     Zip::Writer.open(response.output) do |zip|
       Dir.glob("#{request_path_absolute}/**/*").each do |target_path|
         next if File.directory? target_path
+        next unless File.readable? target_path
         relative_path = target_path.relative_to request_path_absolute
         zip.add relative_path, File.open(target_path)
       end
@@ -131,6 +141,6 @@ server = HTTP::Server.new do |context|
 end
 
 # start
-address = server.bind_tcp "0.0.0.0", 3030
+address = server.bind_tcp listen, port
 puts "Listening on http://#{address}"
 server.listen
