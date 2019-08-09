@@ -5,10 +5,18 @@ Provide access to a subtree the of filesystem via http. Simply. Supports
 - downloading files
 - downloading zipped directories
 - uploading
+- optional parameters (defaults below)
 
-`webfs --root ~ --port 3030 --listen 127.0.0.1`
+`webfs --root ~ --listen 127.0.0.1 --port 3030`
 
 # DEV
+
+Install crystal-lang (https://crystal-lang.org/) and checkout the repo.
+
+```
+cd webfs
+crystal webfs -- --root ~ --listen 127.0.0.1 --port 3030
+```
 
 ## macos
 ```
