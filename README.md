@@ -34,7 +34,7 @@ ssh $BUILDSERVER ls -hal webfs
 scp $BUILDSERVER:~/webfs ~/Projekte/isac/bw/bundles/webfs/files
 ```
 
-## prepare buildserver
+## prepare ubuntu 18.04 buildserver
 ```
 curl -sSL https://dist.crystal-lang.org/apt/setup.sh | sudo bash
 sudo apt-get install crystal libz-dev libssl-dev
