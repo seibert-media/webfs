@@ -48,6 +48,6 @@ struct Int
     else
       size.to_i.to_s
     end
-    size + "B KiB MiB GiB TiB PiB EiB ZiB YiB".split(" ")[i]
+    size + " " + "B KiB MiB GiB TiB PiB EiB ZiB YiB".split(" ")[i]
   end
 end
