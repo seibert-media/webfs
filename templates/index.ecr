@@ -47,7 +47,7 @@
 <ul class=footer>
   <li>
     <a href="<%= uri_encode_path "#{request_path}" %>?download=zip">
-      download zipped folder
+      download <%= File.basename request_path %>.zip
     </a>
   </li>
   <% if File.writable? request_path_absolute %>
