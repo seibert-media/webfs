@@ -2,8 +2,8 @@
 
 Provide access to a subtree the of filesystem via http. Simply. Supports
 - indexing a directory
-- downlaoding files
-- downloading the whole directory
+- downloading files
+- downloading the directory zipped
 - uploading
 
 `webfs --root ~ --port 3030 --listen 127.0.0.1`
