@@ -83,6 +83,7 @@ server = HTTP::Server.new do |context|
   # RESPONSE
   #
   response.content_type = "text/html"
+  download_filename = File.basename(request_path_absolute).download_filename
   if confirm_delete
     # COFIRM DELETE
     response.print ECR.render("templates/confirm_delete.ecr")
@@ -95,7 +96,7 @@ server = HTTP::Server.new do |context|
   elsif request.query_params.fetch("download", false) == "zip"
     # DOWNLOAD ZIP
     response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}.zip\""
+    response.headers["Content-Disposition"] = "attachment; filename=\"#{download_filename}\""
     Zip::Writer.open(response.output) do |zip|
       Dir.glob("#{request_path_absolute}/**/*").each do |target_path|
         next if File.directory? target_path
@@ -106,6 +107,8 @@ server = HTTP::Server.new do |context|
     end
     log "download zipped '#{request_path_absolute}'"
   elsif File.directory? request_path_absolute
+    log File.basename "/"
+    
     # INDEX
     # build title
     elements = request_path.split('/')

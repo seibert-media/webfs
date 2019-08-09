@@ -1,7 +1,7 @@
 <%= ECR.render("templates/header.ecr") %>
 
 <h1>
-  <% title_elements.each_with_index do |element, i| -%><a href="<%= uri_encode_path "#{element}/".relative_to root %>"><%= "home" if i == 0%><%= File.basename "#{element}".relative_to root %>/</a><% end %>
+  <% title_elements.each_with_index do |element, i| -%><a href="<%= uri_encode_path "#{element}/".relative_to root %>"><%= "start " if i == 0%><%= File.basename "#{element}".relative_to root %>/</a><% end %>
 </h1> 
 <% if notice %>
   <div class=notice>
@@ -47,7 +47,7 @@
 <ul class=footer>
   <li>
     <a href="<%= uri_encode_path "#{request_path}" %>?download=zip">
-      download <%= File.basename request_path %>.zip
+      download <%= download_filename %>
     </a>
   </li>
   <% if File.writable? request_path_absolute %>

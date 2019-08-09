@@ -32,6 +32,10 @@ class String
   def relative_to(root : String)
     self.to_s[root.size..-1]
   end
+  
+  def download_filename
+    (File.basename(self) == "/" ? "root" : File.basename(self)) + ".zip"
+  end
 end
 
 # format int as si
