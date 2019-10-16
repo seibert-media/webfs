@@ -32,7 +32,7 @@ server = HTTP::Server.new do |context|
   #
   notice = permission_error = confirm_delete = nil
   request, response = context.request, context.response
-  request_path = URI.unescape(request.path.gsub(/\/$/, nil))
+  request_path = URI.decode(request.path.gsub(/\/$/, nil))
   request_path_absolute = Path["#{root}/#{request_path}"].normalize.to_s
   log "#{request.method} '#{request_path}'"
   # POST
