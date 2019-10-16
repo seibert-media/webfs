@@ -10,7 +10,7 @@ def filename_from_header(header : String)
 end
 
 def uri_encode_path(path : String)
-  path.split("/").map{|element| URI.escape element}.join("/")
+  path.split("/").map{|element| URI.encode element}.join("/")
 end
 
 class HTTP::Request
