@@ -53,8 +53,9 @@ server = HTTP::Server.new do |context|
               notice = log "file already exists '#{target_path}'"
             else
               file = File.open target_path, "w" do |file|
-                IO.copy(part.body, file)
+                IO.copy part.body, file
               end
+              File.chmod target_path, 0o777
             end
           end
         end
