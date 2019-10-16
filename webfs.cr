@@ -1,4 +1,4 @@
-puts "WebFS 1.0 starting"
+puts "WebFS starting"
 
 require "http"
 require "http/server"
