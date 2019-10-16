@@ -1,6 +1,6 @@
 # ABOUT
 
-Provide access to a subtree the of filesystem via http. Simply. Supports
+Provide access to a subtree of the filesystem via http. Simply. Supports
 - indexing a directory
 - downloading files
 - downloading zipped directories
