@@ -108,8 +108,6 @@ server = HTTP::Server.new do |context|
     end
     log "download zipped '#{request_path_absolute}'"
   elsif File.directory? request_path_absolute
-    log File.basename "/"
-    
     # INDEX
     # build title
     elements = request_path.split('/')
