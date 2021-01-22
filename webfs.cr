@@ -4,7 +4,7 @@ require "http"
 require "http/server"
 require "ecr"
 require "uri"
-require "zip"
+require "compress/zip"
 require "file_utils"
 require "mime"
 require "./lib"
@@ -98,7 +98,7 @@ server = HTTP::Server.new do |context|
     # DOWNLOAD ZIP
     response.headers["Content-Type"] = "application/zip"
     response.headers["Content-Disposition"] = "attachment; filename=\"#{download_filename}\""
-    Zip::Writer.open(response.output) do |zip|
+    Compress::Zip::Writer.open(response.output) do |zip|
       Dir.glob("#{request_path_absolute}/**/*").each do |target_path|
         next if File.directory? target_path
         next unless File.readable? target_path
