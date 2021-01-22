@@ -144,5 +144,5 @@ end
 
 # start
 address = server.bind_tcp listen, port
-puts "Listening on http://#{address}"
+log "Listening on http://#{address}"
 server.listen
