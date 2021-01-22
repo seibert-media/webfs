@@ -1,5 +1,5 @@
-def log(entry : String)
-  puts entry
+def log(entry)
+  puts entry.to_s
   entry
 end
 
