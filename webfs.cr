@@ -99,7 +99,7 @@ server = HTTP::Server.new do |context|
     response.headers["Content-Type"] = "application/zip"
     response.headers["Content-Disposition"] = "attachment; filename=\"#{download_filename}\""
     Compress::Zip::Writer.open(response.output) do |zip|
-      Dir.glob("#{request_path_absolute}/**/*").each do |target_path|
+      Dir.glob("#{request_path_absolute}/**/*", match_hidden: true).each do |target_path|
         next if File.directory? target_path
         next unless File.readable? target_path
         relative_path = target_path.relative_to request_path_absolute
@@ -115,8 +115,7 @@ server = HTTP::Server.new do |context|
       root + elements[0..i].join("/")
     end
     # collect entries
-    entries = Dir["#{request_path_absolute}/*"].map{|entry| entry}
-    entries = Dir["#{request_path_absolute}/*"]
+    entries = Dir.glob("#{request_path_absolute}/*", match_hidden: true)
     dirs = entries.select{|entry| File.directory? entry}.sort
     files = (entries - dirs).sort
     sorted_entries = dirs + files
