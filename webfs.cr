@@ -116,6 +116,7 @@ server = HTTP::Server.new do |context|
     end
     # collect entries
     entries = Dir["#{request_path_absolute}/*"].map{|entry| entry}
+    entries = Dir["#{request_path_absolute}/*"]
     dirs = entries.select{|entry| File.directory? entry}.sort
     files = (entries - dirs).sort
     sorted_entries = dirs + files
