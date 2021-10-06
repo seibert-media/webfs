@@ -5,10 +5,12 @@ on:
       - '*'
 jobs:
   build-and-release:
-    runs-on: crystallang/crystal
+    runs-on: ubuntu-latest
     steps:
       - name: get code
         uses: actions/checkout@v2
+      - name: install crystal
+        uses: crystal-lang/install-crystal@v1
       - name: build release
         run: crystal build webfs.cr --release --static
       - name: create release
