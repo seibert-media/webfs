@@ -12,133 +12,143 @@ require "./lib"
 STDOUT.sync = true
 
 # ARGUMENTS
+
 # root
 i = ARGV.index("--root")
-root = i ? ARGV[i + 1].gsub(/\/$/, nil) : Path["~"].expand.to_s
+root = Path[i ? ARGV[i + 1] : "~"].expand(home: true).normalize(remove_final_separator: true).to_s
 log "root '#{root}'"
+
 # listen
 i = ARGV.index("--listen")
 listen = i ? ARGV[i + 1] : "127.0.0.1"
 log "listen #{listen}"
+
 # port
 i = ARGV.index("--port")
 port = i ? ARGV[i + 1].to_i : 3030
 log "port #{port}"
 
 # LOOP
-server = HTTP::Server.new do |context|
+server = HTTP::Server.new([
+  HTTP::ErrorHandler.new,
+  HTTP::LogHandler.new ,
+]) do |context|
+
   #
   # REQUEST
   #
-  notice = permission_error = confirm_delete = nil
+
   request, response = context.request, context.response
   request_path = URI.decode(request.path.gsub(/\/$/, nil))
   request_path_absolute = Path["#{root}/#{request_path}"].normalize.to_s
-  log "#{request.method} '#{request_path}'"
-  # POST
+  
+  # NOT FOUND
+  if !File.exists?(request_path_absolute)
+    response.respond_with_status(
+      status: :not_found, 
+      message: "can not find '#{request_path_absolute}'"
+    )
+    next
+  end
+  
+  # PERISSION DENIED
   if !File.real_path(request_path_absolute).starts_with?(root)
-    permission_error = true
-  else
-    if request.method == "POST"
-      name = file = nil
-      case request.content_type
-      when "multipart/form-data"
-        # UPLOAD
-        HTTP::FormData.parse(request) do |part|
-          case part.name
-          when "file"
-            name = filename_from_header part.headers["Content-Disposition"]
-            target_path = Path["#{request_path_absolute}/#{name}"].normalize.to_s
-            if File.exists? target_path
-              notice = log "file already exists '#{target_path}'"
-            else
-              file = File.open target_path, "w" do |file|
-                IO.copy part.body, file
-              end
-              File.chmod target_path, 0o777
-            end
+    response.respond_with_status(
+      status: :unauthorized, 
+      message: "not allowed '#{request_path_absolute}'"
+    )
+    next
+  end
+
+  # POST
+  if request.method == "POST"
+    case request.content_type
+
+    # UPLOAD
+    when "multipart/form-data"
+      HTTP::FormData.parse(request) do |part|
+        case part.name
+        when "file"
+          name = filename_from_header part.headers["Content-Disposition"]
+          target_path = Path["#{request_path_absolute}/#{name}"].normalize.to_s
+          file = File.open target_path, "w" do |file|
+            IO.copy part.body, file
           end
-        end
-        log "name '#{name}', file #{!!file}"
-      when "application/x-www-form-urlencoded"
-        # DELETE
-        if request.post_params.fetch("_method", nil) == "DELETE"
-          relative_delete_path = request.post_params["path"]
-          delete_path = "#{root}#{relative_delete_path}"
-          if request.post_params.fetch("confirm", nil) == "true"
-            if File.directory? delete_path
-              log "deleting recursively '#{relative_delete_path}'"
-              FileUtils.rm_rf delete_path
-            else
-              log "deleting '#{relative_delete_path}'"
-              FileUtils.rm delete_path
-            end
-          else
-            confirm_delete = true
-          end
+          File.chmod target_path, 0o777
         end
       end
+      response.status = HTTP::Status.new(302)
+      response.headers["Location"] = request_path
+      next
+
+    # DELETE
+    when "application/x-www-form-urlencoded"
+      if request.post_params.fetch("_method", nil) == "DELETE"
+        if File.directory? request_path_absolute
+          log "deleting directory '#{request_path_absolute}'"
+          FileUtils.rm_rf request_path_absolute
+        else
+          log "deleting file '#{request_path_absolute}'"
+          FileUtils.rm request_path_absolute
+        end
+      end
+      response.status = HTTP::Status.new(302)
+      response.headers["Location"] = Path[request_path].dirname.to_s
+      next
     end
   end
+  
   #
   # RESPONSE
   #
-  response.content_type = "text/html"
-  download_filename = File.basename(request_path_absolute).download_filename
-  if confirm_delete
-    # COFIRM DELETE
+    
+  # COFIRM DELETE
+  if request.query_params["action"]? == "delete"
+    response.content_type = "text/html"
     response.print ECR.render("templates/confirm_delete.ecr")
-    log "confirm delete '#{relative_delete_path}'"
-  elsif permission_error
-    # NOT FOUND
-    response.status = :unauthorized
-    response.print "401"
-    log "not allowed '#{request_path_absolute}'"
-  elsif request.query_params.fetch("download", false) == "zip"
-    # DOWNLOAD ZIP
+  
+  # DOWNLOAD ZIP
+  elsif request.query_params["action"]? == "download"
     response.headers["Content-Type"] = "application/zip"
-    response.headers["Content-Disposition"] = "attachment; filename=\"#{download_filename}\""
+    response.headers["Content-Disposition"] = "attachment; filename=\"#{download_dirname(request_path)}\""
     Compress::Zip::Writer.open(response.output) do |zip|
-      Dir.glob("#{request_path_absolute}/**/*", match_hidden: true).each do |target_path|
-        next if File.directory? target_path
-        next unless File.readable? target_path
-        relative_path = target_path.relative_to request_path_absolute
-        zip.add relative_path, File.open(target_path)
+      Dir.glob("#{request_path_absolute}/**/*", match_hidden: true).each do |entry|
+        if File.directory?(entry)
+          zip.add_dir(Path[entry].relative_to(request_path_absolute).to_s)
+        elsif File.readable?(entry)
+          zip.add Path[entry].relative_to(request_path_absolute).to_s, File.open(entry)
+        else
+          log "skipping '#{entry}': unreadable"
+        end
       end
     end
-    log "download zipped '#{request_path_absolute}'"
+  
+  # INDEX
   elsif File.directory? request_path_absolute
-    # INDEX
     # build title
     elements = request_path.split('/')
     title_elements = elements.map_with_index do |element, i|
-      root + elements[0..i].join("/")
+      elements[0..i].join("/")
     end
     # collect entries
-    entries = Dir.glob("#{request_path_absolute}/*", match_hidden: true)
-    dirs = entries.select{|entry| File.directory? entry}.sort
-    files = (entries - dirs).sort
-    sorted_entries = dirs + files
+    entries = Dir
+      .glob("#{request_path_absolute}/*", match_hidden: true)
+      .sort_by{ |entry| [File.directory?(entry) ? "0" : "1", entry.downcase] }
     # render
+    response.content_type = "text/html"
     response.print ECR.render("templates/index.ecr")
-    log "index #{sorted_entries.size} entries"
-  elsif File.exists? request_path_absolute
-    # DOWNLOAD
+
+  # DOWNLOAD
+  elsif File.file? request_path_absolute
     if MIME.from_filename? request_path_absolute
       response.headers["Content-Type"] = MIME.from_filename request_path_absolute
     else
       response.headers["Content-Type"] = "application/octet-stream"
     end
     response.headers["Content-Disposition"] = "attachment; filename=\"#{File.basename request_path_absolute}\""
-    File.open request_path_absolute, "r" do |f|
-      IO.copy f, response.output
+    File.open request_path_absolute, "r" do |file|
+      IO.copy file, response.output
     end
-    log "download #{request_path_absolute}'"
-  else
-    # NOT FOUND
-    response.status = :not_found
-    response.print "404"
-    log "can not find '#{request_path_absolute}'"
   end
 end
 

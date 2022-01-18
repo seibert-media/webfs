@@ -4,13 +4,20 @@ def log(entry)
 end
 
 def filename_from_header(header : String)
-  filename_header = header.split(';').find{|e| /^filename=/ =~ e.strip}
+  filename_header = header.split(';').find{ |e| /^filename=/ =~ e.strip }
   filename = filename_header.to_s.split("=")[1].gsub(/"/, nil)
   filename == "" ? nil : filename
 end
 
+def download_dirname(path)
+  (File.basename(path).blank? ? "root" : File.basename(path)).lstrip(".") + ".zip"
+end
+
 def uri_encode_path(path : String)
-  path.split("/").map{|element| URI.encode element}.join("/")
+  path
+    .split("/")
+    .map{ |element| URI.encode_path element }
+    .join("/")
 end
 
 class HTTP::Request
@@ -24,17 +31,6 @@ class HTTP::Request
     else
        {} of String => String
     end
-  end
-end
-
-# get relative path
-class String
-  def relative_to(root : String)
-    self.to_s[root.size..-1]
-  end
-  
-  def download_filename
-    (File.basename(self) == "/" ? "root" : File.basename(self)) + ".zip"
   end
 end
 

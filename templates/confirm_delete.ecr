@@ -1,12 +1,12 @@
 <%= ECR.render("templates/header.ecr") %>
 
-confirm delete <%= File.directory?(delete_path.to_s) ? "directory" : "file" %> '<%= relative_delete_path %>'
+confirm delete <%= File.directory?(request_path_absolute) ? "directory" : "file" %> '<%= request_path %>'
 
-<% if File.directory? delete_path.to_s %>
+<% if File.directory? request_path_absolute %>
   <ul>
-    <li><%= relative_delete_path %></li>
-    <% Dir["#{delete_path}/**"].each do |path| %>
-      <li><%= path.relative_to root %></li>
+    <li><%= request_path %></li>
+    <% Dir["#{request_path_absolute}/**"].each do |path| %>
+      <li><%= Path[path].relative_to(root).to_s %></li>
     <% end %>
   </ul>
 <% end %>
@@ -14,8 +14,6 @@ confirm delete <%= File.directory?(delete_path.to_s) ? "directory" : "file" %> '
 <form action="<%= "#{request_path}/" %>" method=post>
   <input name=utf8 type=hidden value="&#x2713;" />
   <input type=hidden name=_method value="DELETE" />
-  <input type=hidden name=confirm value="true" />
-  <input type=hidden name=path value="<%= "#{relative_delete_path}" %>" />
   <input type=submit name=commit value=delete />
 </form>
 

@@ -1,13 +1,8 @@
 <%= ECR.render("templates/header.ecr") %>
 
 <h1>
-  <% title_elements.each_with_index do |element, i| -%><a href="<%= uri_encode_path "#{element}/".relative_to root %>"><%= "~" if i == 0%><%= File.basename "#{element}".relative_to root %>/</a><% end %>
+  <% title_elements.each_with_index do |element, i| -%><a href="<%= i == 0 ? "/" : uri_encode_path(element) %>"><%= i == 0 ? "~" : Path[element].basename.to_s %>/</a><% end %>
 </h1> 
-<% if notice %>
-  <div class=notice>
-    <%= notice %>
-  </div>
-<% end %>
 <table>
   <thead>
     <tr>
@@ -18,7 +13,7 @@
     <tr>
   </thead>
   <tbody>
-    <% sorted_entries.each do |entry| %>
+    <% entries.each do |entry| %>
       <tr>
         <td class=path>
           <a href="<%= uri_encode_path "#{request_path}/#{File.basename entry}" %>">
@@ -32,12 +27,9 @@
           <%= File.info(entry).modification_time.to_utc.to_s "%y-%m-%d %H:%M:%S" %>
         </td>
         <td class=delete>
-          <form action="<%=uri_encode_path "#{request_path}/" %>" method=post>
-            <input name=utf8 type=hidden value="&#x2713;" />
-            <input type=hidden name=_method value="DELETE" />
-            <input type=hidden name=path value="<%= "#{request_path}/#{File.basename entry}" %>" />
-            <input type=submit name=commit value=delete />
-          </form>
+          <a href="<%=uri_encode_path("#{request_path}/#{File.basename entry}") %>/?action=delete">
+            delete
+          </a>
         </td>
       </tr>
     <% end %>
@@ -46,8 +38,8 @@
 
 <ul class=footer>
   <li>
-    <a href="<%= uri_encode_path "#{request_path}" %>?download=zip">
-      download <%= download_filename %>
+    <a href="<%= uri_encode_path "#{request_path}" %>?action=download">
+      download <%= download_dirname(request_path) %>
     </a>
   </li>
   <% if File.writable? request_path_absolute %>
