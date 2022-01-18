@@ -12,7 +12,7 @@ jobs:
       - name: install crystal
         uses: crystal-lang/install-crystal@v1
       - name: build release
-        run: crystal build webfs.cr --release --static
+        run: crystal build webfs.cr --release
       - name: create release
         id: create_release
         uses: actions/create-release@v1
