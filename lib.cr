@@ -71,3 +71,18 @@ class HTTP::MyLogHandler
     end
   end
 end
+
+class HTTP::MyErrorHandler
+  include HTTP::Handler
+
+  def call(context) : Nil
+    begin
+      call_next(context)
+    rescue error : Exception
+      unless context.response.closed? || context.response.wrote_headers?
+        puts "#{error.class}: #{error.message} (#{error.backtrace[0]})"
+        context.response.respond_with_status(:internal_server_error)
+      end
+    end
+  end
+end
