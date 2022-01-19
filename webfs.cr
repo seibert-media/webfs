@@ -31,7 +31,7 @@ log "port #{port}"
 # LOOP
 server = HTTP::Server.new([
   HTTP::ErrorHandler.new,
-  HTTP::LogHandler.new ,
+  HTTP::MyLogHandler.new,
 ]) do |context|
 
   #
@@ -70,11 +70,14 @@ server = HTTP::Server.new([
         case part.name
         when "file"
           name = filename_from_header part.headers["Content-Disposition"]
-          target_path = Path["#{request_path_absolute}/#{name}"].normalize.to_s
-          file = File.open target_path, "w" do |file|
-            IO.copy part.body, file
+          if name
+            target_path = Path[request_path_absolute].join(name).normalize.to_s
+            puts "uploading #{target_path}"
+            file = File.open target_path, "w" do |file|
+              IO.copy part.body, file
+            end
+            File.chmod target_path, 0o777
           end
-          File.chmod target_path, 0o777
         end
       end
       response.status = HTTP::Status.new(302)
@@ -84,6 +87,7 @@ server = HTTP::Server.new([
     # DELETE
     when "application/x-www-form-urlencoded"
       if request.post_params.fetch("_method", nil) == "DELETE"
+        puts "deleting #{request_path_absolute}"
         if File.directory? request_path_absolute
           log "deleting directory '#{request_path_absolute}'"
           FileUtils.rm_rf request_path_absolute
@@ -109,6 +113,7 @@ server = HTTP::Server.new([
   
   # DOWNLOAD ZIP
   elsif request.query_params["action"]? == "download"
+    puts "downloading directory '#{request_path_absolute}'"
     response.headers["Content-Type"] = "application/zip"
     response.headers["Content-Disposition"] = "attachment; filename=\"#{download_dirname(request_path)}\""
     Compress::Zip::Writer.open(response.output) do |zip|
@@ -140,6 +145,7 @@ server = HTTP::Server.new([
 
   # DOWNLOAD
   elsif File.file? request_path_absolute
+    puts "downloading file '#{request_path_absolute}'"
     if MIME.from_filename? request_path_absolute
       response.headers["Content-Type"] = MIME.from_filename request_path_absolute
     else

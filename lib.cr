@@ -50,3 +50,24 @@ struct Int
     end + " " + %w(B KiB MiB GiB TiB PiB EiB ZiB YiB)[i]
   end
 end
+
+class HTTP::MyLogHandler
+  include HTTP::Handler
+
+  def call(context) : Nil
+    start = Time.monotonic
+
+    begin
+      call_next(context)
+    ensure
+      puts [
+        context.request.method,
+        context.request.resource,
+        context.request.version,
+        "-",
+        context.response.status_code,
+        (Time.monotonic - start).total_seconds.humanize(precision: 2, significant: false).to_s + "s",
+      ].join(" ")
+    end
+  end
+end
